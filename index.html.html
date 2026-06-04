@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para ti, cada día</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+/* ── DESIGN TOKENS ─────────────────────────────── */
+:root {
+  --bg:        #18102e;
+  --surface:   #231848;
+  --surface2:  #2e2060;
+  --border:    rgba(195,150,255,0.2);
+  --border-hi: rgba(195,150,255,0.45);
+  --purple:    #c084fc;
+  --purple-dim:rgba(192,132,252,0.45);
+  --rose:      #f472b6;
+  --gold:      #fbbf24;
+  --text:      #f0e8ff;
+  --text-dim:  rgba(240,232,255,0.55);
+  --locked:    #1a1238;
+  --radius:    18px;
+}
+
+/* ── RESET & BASE ──────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND ATMOSPHERE ─────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 55% at 8%   5%,  rgba(130,60,230,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 92%  95%, rgba(230,60,140,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse 45% 35% at 50%  50%, rgba(90,30,170,0.15)  0%, transparent 70%),
+    radial-gradient(ellipse 80% 40% at 50%  0%,  rgba(100,45,190,0.20) 0%, transparent 55%);
+}
+
+#stars { position:fixed; inset:0; z-index:0; pointer-events:none; }
+
+/* ── LAYOUT ────────────────────────────────────── */
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 660px; margin: 0 auto;
+  padding: 0 22px 100px;
+}
+
+/* ── HEADER ────────────────────────────────────── */
+header { text-align: center; padding: 64px 0 36px; }
+.eyebrow {
+  font-size: 10px; font-weight: 300; letter-spacing: 6px;
+  text-transform: uppercase; color: var(--purple);
+  opacity: .8; margin-bottom: 18px;
+}
+header h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(34px, 8vw, 54px);
+  font-weight: 400; line-height: 1.12; color: var(--text);
+}
+header h1 em { font-style: italic; color: var(--gold); }
+.header-rule {
+  width: 1px; height: 56px;
+  background: linear-gradient(to bottom, transparent, var(--purple-dim), transparent);
+  margin: 22px auto 0;
+}
+
+/* ── DATE BADGE ────────────────────────────────── */
+.date-badge {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  width: fit-content; margin: 0 auto 44px;
+  padding: 7px 22px;
+  background: rgba(192,132,252,0.08);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  font-size: 13px; font-weight: 300; letter-spacing: 1px;
+  color: var(--purple); text-transform: capitalize;
+}
+.date-badge .day-counter {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px; color: var(--gold);
+}
+
+/* ── LOADING STATE ─────────────────────────────── */
+#loadingState {
+  text-align: center; padding: 80px 0;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+.spinner {
+  width: 36px; height: 36px;
+  border: 2px solid rgba(192,132,252,0.15);
+  border-top-color: var(--purple);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: var(--text-dim); letter-spacing: 2px; }
+
+/* ── ERROR STATE ───────────────────────────────── */
+#errorState {
+  display: none; text-align: center; padding: 60px 20px;
+  background: rgba(255,80,80,0.05);
+  border: 1px solid rgba(255,80,80,0.2);
+  border-radius: var(--radius); margin-bottom: 20px;
+}
+.error-icon { font-size: 32px; margin-bottom: 12px; }
+.error-title { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 8px; color: #ff8080; }
+.error-msg { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+
+/* ── ENVELOPE SCENE ────────────────────────────── */
+#envelopeScene {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 26px; padding: 36px 20px 44px;
+}
+.envelope-hint {
+  font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--text-dim); animation: hintPulse 2.2s ease-in-out infinite;
+}
+@keyframes hintPulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+
+.envelope-wrap { cursor: pointer; user-select: none; position: relative; }
+.envelope-svg {
+  width: 220px; height: 160px;
+  filter: drop-shadow(0 10px 40px rgba(160,80,255,0.3));
+  transition: transform 0.12s ease;
+}
+.envelope-wrap:active .envelope-svg { transform: scale(0.95); }
+.envelope-wrap.shake { animation: envShake 0.35s ease; }
+@keyframes envShake {
+  0%,100%{transform:rotate(0)}
+  20%{transform:translateX(-7px) rotate(-2.5deg)}
+  40%{transform:translateX(7px) rotate(2.5deg)}
+  60%{transform:translateX(-4px) rotate(-1.5deg)}
+  80%{transform:translateX(4px) rotate(1.5deg)}
+}
+.envelope-wrap.opening { animation: envOpen 0.85s cubic-bezier(.4,0,.2,1) forwards; }
+@keyframes envOpen {
+  0%  { transform:scale(1) rotate(0); opacity:1; }
+  30% { transform:scale(1.18) rotate(-3deg); }
+  65% { transform:scale(0.85) rotate(2deg); opacity:.7; }
+  100%{ transform:scale(0) rotate(6deg); opacity:0; }
+}
+
+.crack-dots { display:flex; gap:9px; }
+.crack-dot {
+  width:7px; height:7px; border-radius:50%;
+  background: rgba(244,114,182,0.12);
+  border: 1px solid rgba(244,114,182,0.3);
+  transition: all 0.3s ease;
+}
+.crack-dot.lit {
+  background: var(--rose);
+  border-color: var(--rose);
+  box-shadow: 0 0 8px rgba(244,114,182,0.7);
+}
+
+/* ── TODAY CARD ────────────────────────────────── */
+#todayCard {
+  display: none;
+  background: linear-gradient(140deg, #2c1f58 0%, #1e1445 100%);
+  border: 1px solid rgba(195,150,255,0.3);
+  border-radius: var(--radius);
+  overflow: hidden; position: relative;
+  box-shadow: 0 4px 60px rgba(140,60,255,0.18), 0 0 0 1px rgba(200,150,255,0.06);
+  margin-bottom: 16px;
+}
+#todayCard.revealed {
+  display: block;
+  animation: cardIn 0.95s cubic-bezier(.2,.8,.3,1) forwards;
+}
+@keyframes cardIn {
+  from { opacity:0; transform:translateY(44px) scale(0.94); }
+  to   { opacity:1; transform:translateY(0)    scale(1); }
+}
+
+.card-glow {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(192,132,252,0.12), transparent);
+}
+.today-label {
+  position: absolute; top: 18px; right: 18px;
+  font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+  color: var(--rose); font-weight: 400;
+  background: rgba(244,114,182,0.1); padding: 4px 11px;
+  border-radius: 100px; border: 1px solid rgba(244,114,182,0.28);
+}
+.ghost-num {
+  position: absolute; top: 6px; left: 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 88px; font-weight: 500; line-height: 1;
+  color: rgba(192,132,252,0.07);
+  pointer-events: none; user-select: none;
+}
+
+.card-inner { padding: 30px 28px 26px; position: relative; }
+
+.type-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 9px; letter-spacing: 3.5px; text-transform: uppercase;
+  font-weight: 400; color: rgba(192,132,252,0.75);
+  margin-bottom: 18px; margin-top: 10px;
+}
+
+/* Image inside card */
+.card-image {
+  width: 100%; border-radius: 12px; overflow: hidden;
+  margin-bottom: 22px;
+  border: 1px solid var(--border);
+  display: none;
+}
+.card-image img { width:100%; max-height:400px; object-fit:cover; display:block; }
+.card-image.show { display: block; }
+
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px; font-weight: 400; font-style: italic;
+  color: var(--gold); margin-bottom: 14px; line-height: 1.35;
+}
+.card-body {
+  font-size: 15px; line-height: 1.95; color: var(--text);
+  white-space: pre-wrap; font-weight: 300;
+}
+.card-rule {
+  height: 1px; margin: 22px 0;
+  background: linear-gradient(to right, transparent, var(--border), transparent);
+}
+.card-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; color: var(--text-dim); letter-spacing: .5px;
+}
+.heart {
+  color: var(--rose); font-size: 18px;
+  animation: beat 1.9s ease-in-out infinite; display: inline-block;
+}
+@keyframes beat { 0%,100%{transform:scale(1);opacity:.7} 50%{transform:scale(1.28);opacity:1} }
+
+/* ── SECTION LABEL ─────────────────────────────── */
+.section-label {
+  font-size: 9px; letter-spacing: 5px; text-transform: uppercase;
+  font-weight: 300; color: var(--text-dim);
+  display: flex; align-items: center; gap: 12px;
+  margin: 42px 0 16px;
+}
+.section-label::before,.section-label::after {
+  content:''; flex:1; height:1px;
+  background: linear-gradient(to right, transparent, var(--border));
+}
+.section-label::after { background: linear-gradient(to left, transparent, var(--border)); }
+
+/* ── PAST GRID ─────────────────────────────────── */
+.past-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(138px,1fr));
+  gap: 10px; margin-bottom: 42px;
+}
+.past-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 16px 14px;
+  cursor: pointer; transition: transform .22s ease, border-color .22s ease;
+  position: relative; overflow: hidden;
+}
+.past-card::after {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(192,132,252,0.06), transparent);
+  opacity:0; transition:opacity .22s;
+}
+.past-card:hover { transform:translateY(-3px); border-color: var(--border-hi); }
+.past-card:hover::after { opacity:1; }
+.past-num {
+  font-family:'Playfair Display',serif; font-size:26px;
+  color: var(--purple); display:block; line-height:1;
+}
+.past-type {
+  font-size:9px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--text-dim); margin:5px 0 3px; display:block;
+}
+.past-preview {
+  font-size:11px; color:var(--text-dim);
+  overflow:hidden; text-overflow:ellipsis;
+  display:-webkit-box; -webkit-line-clamp:2;
+  -webkit-box-orient:vertical; line-height:1.45;
+}
+
+/* ── FUTURE GRID ───────────────────────────────── */
+.future-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px,1fr));
+  gap: 8px;
+}
+.future-card {
+  background: var(--locked); border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 12px; padding: 14px 10px; text-align: center; opacity:.45;
+}
+.future-num {
+  font-family:'Playfair Display',serif; font-size:20px;
+  color:var(--text-dim); display:block;
+}
+.lock { font-size:13px; display:block; margin-top:4px; opacity:.35; }
+
+/* ── MODAL ─────────────────────────────────────── */
+.modal-overlay {
+  position:fixed; inset:0; z-index:100;
+  background:rgba(10,6,24,0.94); backdrop-filter:blur(12px);
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; opacity:0; pointer-events:none; transition:opacity .3s;
+}
+.modal-overlay.open { opacity:1; pointer-events:all; }
+.modal {
+  background:linear-gradient(140deg,#2c1f58,#1e1445);
+  border:1px solid rgba(195,150,255,0.25); border-radius:20px;
+  max-width:560px; width:100%; max-height:90vh; overflow-y:auto;
+  transform:translateY(22px) scale(0.97); transition:transform .3s;
+  position: relative;
+}
+.modal-overlay.open .modal { transform:translateY(0) scale(1); }
+.modal-inner { padding:32px 28px; }
+.modal-close {
+  position:absolute; top:14px; right:14px; width:32px; height:32px;
+  border-radius:50%; background:rgba(255,255,255,0.06); border:none;
+  color:var(--text-dim); font-size:15px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:all .2s;
+}
+.modal-close:hover { background:rgba(255,255,255,0.12); color:var(--text); }
+
+/* ── PREVIEW BAR ───────────────────────────────── */
+.preview-bar {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:rgba(35,24,72,0.9); border:1px solid var(--border-hi);
+  border-radius:100px; padding:8px 18px;
+  display:flex; align-items:center; gap:12px;
+  font-size:11px; letter-spacing:2px; color:var(--purple);
+  backdrop-filter:blur(14px); white-space:nowrap;
+  opacity:0; pointer-events:none; transition:opacity .3s; z-index:50;
+}
+.preview-bar.on { opacity:1; pointer-events:all; }
+.preview-bar button {
+  background:rgba(192,132,252,0.12); border:1px solid rgba(192,132,252,.3);
+  color:var(--purple); border-radius:100px; padding:3px 11px;
+  font-size:14px; cursor:pointer; transition:all .2s; line-height:1;
+}
+.preview-bar button:hover { background:rgba(192,132,252,0.25); }
+.preview-bar .exit-btn { font-size:10px; padding:3px 9px; color:var(--text-dim); }
+
+/* ── CONFETTI ──────────────────────────────────── */
+#confetti { position:fixed; inset:0; pointer-events:none; z-index:200; }
+.cp {
+  position:absolute;
+  animation:fall linear forwards;
+}
+@keyframes fall {
+  0%   { transform:translateY(-10px) rotate(0deg); opacity:1; }
+  100% { transform:translateY(105vh) rotate(800deg); opacity:0; }
+}
+
+/* ── SCROLLBAR ─────────────────────────────────── */
+::-webkit-scrollbar { width:3px; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ── RESPONSIVE ────────────────────────────────── */
+@media(max-width:480px){
+  .past-grid  { grid-template-columns:repeat(2,1fr); }
+  .future-grid{ grid-template-columns:repeat(3,1fr); }
+  .card-inner { padding:24px 18px 20px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="stars"></canvas>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">Solo para ti</p>
+    <h1>Cada día,<br><em>algo especial</em></h1>
+    <div class="header-rule"></div>
+  </header>
+
+  <div class="date-badge">
+    <span id="dateText"></span>
+    <span class="day-counter" id="dayCounter"></span>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingState">
+    <div class="spinner"></div>
+    <p class="loading-text">Cargando tu sorpresa...</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="errorState">
+    <div class="error-icon">✉️</div>
+    <div class="error-title">No se pudo cargar</div>
+    <div class="error-msg" id="errorMsg">Revisa tu conexión o vuelve más tarde.</div>
+  </div>
+
+  <!-- ENVELOPE -->
+  <div id="envelopeScene" style="display:none">
+    <p class="envelope-hint">Abre tu sobre de hoy</p>
+    <div class="envelope-wrap" id="envWrap" onclick="clickEnv()">
+      <svg class="envelope-svg" viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="eg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#3a2568"/>
+            <stop offset="100%" stop-color="#251650"/>
+          </linearGradient>
+          <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#4a2e80"/>
+            <stop offset="100%" stop-color="#301c60"/>
+          </linearGradient>
+        </defs>
+        <rect x="4" y="30" width="212" height="126" rx="8" fill="url(#eg)" stroke="rgba(195,150,255,0.35)" stroke-width="1"/>
+        <line x1="4"   y1="30"  x2="110" y2="95" stroke="rgba(195,150,255,0.1)" stroke-width="1"/>
+        <line x1="216" y1="30"  x2="110" y2="95" stroke="rgba(195,150,255,0.1)" stroke-width="1"/>
+        <line x1="4"   y1="156" x2="110" y2="95" stroke="rgba(195,150,255,0.08)" stroke-width="1"/>
+        <line x1="216" y1="156" x2="110" y2="95" stroke="rgba(195,150,255,0.08)" stroke-width="1"/>
+        <path d="M4 30 L110 4 L216 30 L110 90 Z" fill="url(#fg)" stroke="rgba(195,150,255,0.3)" stroke-width="1"/>
+        <!-- wax seal -->
+        <circle cx="110" cy="75" r="14" fill="#2a1858" stroke="rgba(244,114,182,0.7)" stroke-width="1.5"/>
+        <text x="110" y="80" text-anchor="middle" font-size="13" fill="rgba(244,114,182,0.95)">♥</text>
+        <!-- cracks — revealed one by one -->
+        <line   id="c1" x1="96"  y1="62" x2="109" y2="53" stroke="#f472b6" stroke-width="1.5" stroke-linecap="round" opacity="0"/>
+        <polyline id="c2" points="79,81 94,73 106,79 119,69 131,75" stroke="#f472b6" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0"/>
+        <line   id="c3" x1="69"  y1="91" x2="86"  y2="82" stroke="#f472b6" stroke-width="1.5" stroke-linecap="round" opacity="0"/>
+        <polyline id="c4" points="99,56 110,48 119,57 126,43" stroke="#c084fc" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0"/>
+        <polyline id="c5" points="58,71 80,86 101,79 111,93 131,81 152,89 166,76" stroke="#f472b6" stroke-width="2" stroke-linecap="round" fill="none" opacity="0"/>
+      </svg>
+    </div>
+    <div class="crack-dots" id="dots">
+      <div class="crack-dot" id="d0"></div>
+      <div class="crack-dot" id="d1"></div>
+      <div class="crack-dot" id="d2"></div>
+      <div class="crack-dot" id="d3"></div>
+      <div class="crack-dot" id="d4"></div>
+    </div>
+  </div>
+
+  <!-- TODAY CARD -->
+  <div id="todayCard">
+    <div class="card-glow"></div>
+    <div class="today-label">Hoy</div>
+    <div class="ghost-num" id="ghostNum"></div>
+    <div class="card-inner">
+      <div class="type-pill"><span id="typeIcon"></span><span id="typeLabel"></span></div>
+      <div class="card-image" id="cardImage"><img id="cardImg" src="" alt=""></div>
+      <div class="card-title" id="cardTitle"></div>
+      <div class="card-body"  id="cardBody"></div>
+      <div class="card-rule"></div>
+      <div class="card-foot">
+        <span id="cardDate" style="font-size:11px;color:var(--text-dim);letter-spacing:.5px"></span>
+        <span class="heart">♥</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAST -->
+  <div id="pastSection" style="display:none">
+    <div class="section-label">Días anteriores</div>
+    <div class="past-grid" id="pastGrid"></div>
+  </div>
+
+  <!-- FUTURE -->
+  <div id="futureSection" style="display:none">
+    <div class="section-label">Próximos días</div>
+    <div class="future-grid" id="futureGrid"></div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="maybeCloseModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-inner" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- PREVIEW BAR -->
+<div class="preview-bar" id="previewBar">
+  <span>PREVIEW</span>
+  <button onclick="pvMove(-1)">←</button>
+  <span id="pvLabel">Día 1</span>
+  <button onclick="pvMove(+1)">→</button>
+  <button class="exit-btn" onclick="pvExit()">Salir</button>
+</div>
+
+<div id="confetti"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// ⚙️  CONFIGURACIÓN — edita solo estas líneas
+// ════════════════════════════════════════════════
+
+// 1. ID de tu Google Sheet (la parte larga de la URL)
+//    https://docs.google.com/spreadsheets/d/  👉ESTE_ID👈  /edit
+const SHEET_ID = '1jCmRBikJ4Ms6Nmu1aLy5lc3EHjgtIHbblRPGrSEwAWg';
+
+// 2. Nombre exacto de la pestaña (por defecto "Hoja 1")
+const SHEET_TAB = 'Hoja1';
+
+// 3. Hora (en Perú, UTC-5) a la que se pasa al día siguiente
+const ROLLOVER_HOUR = 21; // 21 = 9 PM
+
+// ════════════════════════════════════════════════
+
+const START_KEY  = 'amor_start_v2';
+const ENV_KEY    = 'amor_env_';       // + dayIndex
+const PV_KEY     = 'amor_preview';
+
+let sheetData    = [];   // rows from Sheets
+let previewMode  = false;
+let previewIdx   = 0;
+let envClicks    = 0;
+const CRACKS     = 5;
+
+// ── TIME / DAY LOGIC ────────────────────────────
+function peruNow() {
+  // UTC-5
+  return new Date(new Date().getTime() - 5 * 3600000);
+}
+
+function getStartDate() {
+  let s = localStorage.getItem(START_KEY);
+  if (!s) {
+    // Store today's date in Peru time as YYYY-MM-DD
+    const now = peruNow();
+    s = now.toISOString().slice(0,10);
+    localStorage.setItem(START_KEY, s);
+  }
+  return s; // 'YYYY-MM-DD'
+}
+
+function daysSinceStart() {
+  const startStr = getStartDate();
+  const start = new Date(startStr + 'T00:00:00');
+  const now    = peruNow();
+  // Current "day" flips at ROLLOVER_HOUR
+  const effective = new Date(now);
+  if (now.getHours() < ROLLOVER_HOUR) {
+    effective.setDate(effective.getDate() - 1);
+  }
+  const diffMs = new Date(effective.toISOString().slice(0,10) + 'T00:00:00') - start;
+  return Math.max(0, Math.floor(diffMs / 86400000));
+}
+
+function currentIdx() {
+  return previewMode ? previewIdx : Math.min(daysSinceStart(), Math.max(0, sheetData.length - 1));
+}
+
+// ── FORMAT DATE ──────────────────────────────────
+function fmtDate(offsetDays = 0) {
+  const d = peruNow();
+  d.setDate(d.getDate() - offsetDays);
+  return d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
+}
+
+// ── GOOGLE SHEETS FETCH ──────────────────────────
+// Columns expected (0-indexed):
+//   A = type   (foto | carta | gesto)
+//   B = title
+//   C = message
+//   D = imageUrl  (optional)
+async function loadSheet() {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const csv  = await res.text();
+  return parseCSV(csv);
+}
+
+function parseCSV(csv) {
+  // Simple but robust CSV parser (handles quoted fields with commas/newlines)
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < csv.length; i++) {
+    const ch = csv[i], next = csv[i+1];
+    if (inQ) {
+      if (ch === '"' && next === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(field.trim()); field = ''; }
+      else if (ch === '\n' || (ch === '\r' && next === '\n')) {
+        if (ch === '\r') i++;
+        row.push(field.trim()); rows.push(row); row = []; field = '';
+      } else { field += ch; }
+    }
+  }
+  if (field || row.length) { row.push(field.trim()); rows.push(row); }
+  // Remove header row if first cell looks like a header
+  if (rows.length && /^type|^tipo/i.test(rows[0][0])) rows.shift();
+  return rows.filter(r => r.length >= 3 && r[0]);
+}
+
+function rowToDay(r) {
+  return {
+    type:     (r[0]||'carta').toLowerCase().trim(),
+    title:    r[1] || '',
+    message:  r[2] || '',
+    imageUrl: r[3] || ''
+  };
+}
+
+// ── TYPE META ────────────────────────────────────
+function typeMeta(t) {
+  return { foto:{icon:'📷',label:'Foto de nosotros'}, carta:{icon:'✉️',label:'Una carta para ti'}, gesto:{icon:'🎁',label:'Gesto del día'} }[t] || {icon:'♥',label:'Sorpresa'};
+}
+
+// ── RENDER TODAY ─────────────────────────────────
+function renderToday(idx) {
+  const raw  = sheetData[idx];
+  const data = raw ? rowToDay(raw) : { type:'carta', title:'Cada día te quiero más', message:'Hoy no tengo una sorpresa preparada, pero sí tengo algo real:\n\nTe quiero. Mucho. Y eso no cambia ningún día.', imageUrl:'' };
+  const { icon, label } = typeMeta(data.type);
+  const num = idx + 1;
+
+  document.getElementById('ghostNum').textContent  = String(num).padStart(2,'0');
+  document.getElementById('typeIcon').textContent  = icon;
+  document.getElementById('typeLabel').textContent = label;
+  document.getElementById('cardTitle').textContent = data.title;
+  document.getElementById('cardBody').textContent  = data.message;
+  document.getElementById('cardDate').textContent  = fmtDate(previewMode ? 0 : daysSinceStart() - idx);
+
+  const imgBox = document.getElementById('cardImage');
+  const img    = document.getElementById('cardImg');
+  if (data.imageUrl) {
+    img.src = data.imageUrl;
+    imgBox.classList.add('show');
+  } else {
+    imgBox.classList.remove('show');
+  }
+}
+
+// ── ENVELOPE ─────────────────────────────────────
+function envAlreadyOpen(idx) {
+  return !previewMode && !!sessionStorage.getItem(ENV_KEY + idx);
+}
+
+function showContent(idx, animate) {
+  document.getElementById('envelopeScene').style.display = 'none';
+  renderToday(idx);
+  const card = document.getElementById('todayCard');
+  if (animate) {
+    card.style.display = 'none';
+    card.classList.remove('revealed');
+    void card.offsetWidth;
+    card.classList.add('revealed');
+  } else {
+    card.style.cssText = 'display:block;opacity:1;transform:none';
+  }
+  renderPast(idx);
+  renderFuture(idx);
+}
+
+function resetEnvelope() {
+  envClicks = 0;
+  for (let i=1;i<=CRACKS;i++){ const c=document.getElementById('c'+i); if(c) c.style.opacity='0'; }
+  for (let i=0;i<CRACKS;i++)  document.getElementById('d'+i).classList.remove('lit');
+  const w = document.getElementById('envWrap');
+  w.classList.remove('opening','shake');
+}
+
+function initEnvelope(idx) {
+  resetEnvelope();
+  document.getElementById('todayCard').style.display = 'none';
+  document.getElementById('todayCard').classList.remove('revealed');
+
+  if (envAlreadyOpen(idx)) {
+    showContent(idx, false);
+  } else {
+    document.getElementById('envelopeScene').style.display = 'flex';
+  }
+}
+
+function clickEnv() {
+  if (envClicks >= CRACKS) return;
+  envClicks++;
+
+  const w = document.getElementById('envWrap');
+  w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake');
+
+  const c = document.getElementById('c' + envClicks);
+  if (c) { c.style.transition='opacity 0.15s'; c.style.opacity='1'; }
+  document.getElementById('d'+(envClicks-1)).classList.add('lit');
+
+  if (envClicks >= CRACKS) {
+    setTimeout(() => {
+      w.classList.add('opening');
+      setTimeout(() => {
+        const idx = currentIdx();
+        sessionStorage.setItem(ENV_KEY + idx, '1');
+        showContent(idx, true);
+        burst();
+      }, 820);
+    }, 180);
+  }
+}
+
+// ── PAST DAYS ────────────────────────────────────
+function renderPast(idx) {
+  if (idx === 0) { document.getElementById('pastSection').style.display='none'; return; }
+  document.getElementById('pastSection').style.display='block';
+  const g = document.getElementById('pastGrid');
+  g.innerHTML = '';
+  for (let i = idx-1; i >= 0; i--) {
+    const d = sheetData[i] ? rowToDay(sheetData[i]) : { type:'carta', title:'Un día especial' };
+    const { icon } = typeMeta(d.type);
+    const el = document.createElement('div');
+    el.className = 'past-card';
+    el.innerHTML = `<span class="past-num">${String(i+1).padStart(2,'0')}</span><span class="past-type">${icon} ${d.type}</span><span class="past-preview">${d.title}</span>`;
+    el.onclick = () => openModal(i, idx);
+    g.appendChild(el);
+  }
+}
+
+// ── FUTURE DAYS ───────────────────────────────────
+function renderFuture(idx) {
+  const remaining = sheetData.length - idx - 1;
+  if (remaining <= 0) { document.getElementById('futureSection').style.display='none'; return; }
+  document.getElementById('futureSection').style.display='block';
+  const g = document.getElementById('futureGrid');
+  g.innerHTML = '';
+  const show = Math.min(remaining, 14);
+  for (let i = idx+1; i <= idx+show; i++) {
+    const el = document.createElement('div');
+    el.className = 'future-card';
+    el.innerHTML = `<span class="future-num">${String(i+1).padStart(2,'0')}</span><span class="lock">🔒</span>`;
+    g.appendChild(el);
+  }
+  if (remaining > show) {
+    const el = document.createElement('div');
+    el.className = 'future-card'; el.style.opacity='.25';
+    el.innerHTML = `<span class="future-num">+${remaining-show}</span><span class="lock">más</span>`;
+    g.appendChild(el);
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────
+function openModal(dayIdx, curIdx) {
+  const raw = sheetData[dayIdx];
+  const d   = raw ? rowToDay(raw) : { type:'carta', title:'Un día especial', message:'', imageUrl:'' };
+  const { icon, label } = typeMeta(d.type);
+  const ago = curIdx - dayIdx;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="type-pill" style="margin-bottom:14px"><span>${icon}</span><span>${label} · Día ${dayIdx+1}</span></div>
+    ${d.imageUrl ? `<div class="card-image show" style="margin-bottom:18px"><img src="${d.imageUrl}" alt="" style="width:100%;border-radius:10px;display:block"></div>` : ''}
+    <div class="card-title">${d.title}</div>
+    <div style="height:10px"></div>
+    <div class="card-body">${d.message}</div>
+    <div class="card-rule"></div>
+    <div style="font-size:11px;color:var(--text-dim)">${fmtDate(ago)}</div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function maybeCloseModal(e) { if (e.target===document.getElementById('modalOverlay')) closeModal(); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; }
+
+// ── PREVIEW MODE ──────────────────────────────────
+function pvEnter() {
+  previewMode = true;
+  previewIdx  = currentIdx();
+  document.getElementById('previewBar').classList.add('on');
+  pvRefresh();
+}
+function pvExit() {
+  previewMode = false;
+  document.getElementById('previewBar').classList.remove('on');
+  pvRefresh();
+}
+function pvMove(d) {
+  previewIdx = Math.max(0, Math.min(sheetData.length-1, previewIdx+d));
+  pvRefresh();
+}
+function pvRefresh() {
+  const idx = currentIdx();
+  document.getElementById('pvLabel').textContent = `Día ${idx+1}`;
+  document.getElementById('dayCounter').textContent = `· Día ${idx+1}`;
+  initEnvelope(idx);
+  // hide past/future until envelope is opened in preview
+}
+
+// ── CONFETTI ──────────────────────────────────────
+function burst() {
+  const box = document.getElementById('confetti');
+  const cols = ['#c084fc','#f472b6','#fbbf24','#e0b4ff','#fff','#a78bfa','#f9a8d4'];
+  for (let i=0;i<75;i++) setTimeout(()=>{
+    const p = document.createElement('div');
+    p.className = 'cp';
+    p.style.cssText = `left:${Math.random()*100}%;top:-8px;width:${4+Math.random()*6}px;height:${4+Math.random()*6}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.6+Math.random()*2.2}s;`;
+    box.appendChild(p);
+    setTimeout(()=>p.remove(),4500);
+  }, i*22);
+}
+
+// ── STARS ─────────────────────────────────────────
+function initStars() {
+  const cv = document.getElementById('stars');
+  const cx = cv.getContext('2d');
+  let W = cv.width  = window.innerWidth;
+  let H = cv.height = window.innerHeight;
+  const stars = Array.from({length:130},()=>({
+    x:Math.random()*W, y:Math.random()*H,
+    r:Math.random()*1.3+0.2, o:Math.random()*0.45+0.1,
+    sp:Math.random()*0.003+0.001, ph:Math.random()*Math.PI*2
+  }));
+  let t=0;
+  (function draw(){
+    cx.clearRect(0,0,W,H); t+=0.01;
+    stars.forEach(s=>{
+      cx.beginPath(); cx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      cx.fillStyle=`rgba(210,170,255,${Math.max(0,s.o+Math.sin(t*s.sp*100+s.ph)*0.15)})`;
+      cx.fill();
+    });
+    requestAnimationFrame(draw);
+  })();
+  window.addEventListener('resize',()=>{ W=cv.width=window.innerWidth; H=cv.height=window.innerHeight; });
+}
+
+// ── MAIN ──────────────────────────────────────────
+async function init() {
+  initStars();
+
+  // Date badge
+  document.getElementById('dateText').textContent = fmtDate(0);
+
+  try {
+    sheetData = await loadSheet();
+
+    if (sheetData.length === 0) throw new Error('La hoja está vacía. Agrega al menos una fila.');
+
+    // Hide loading
+    document.getElementById('loadingState').style.display = 'none';
+
+    const idx = currentIdx();
+    document.getElementById('dayCounter').textContent = `· Día ${idx+1}`;
+
+    initEnvelope(idx);
+
+  } catch (err) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display   = 'block';
+    document.getElementById('errorMsg').textContent = err.message || 'Error desconocido.';
+    console.error(err);
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey||e.metaKey) && e.key==='p') {
+    e.preventDefault();
+    previewMode ? pvExit() : pvEnter();
+  }
+  if (previewMode && !document.getElementById('modalOverlay').classList.contains('open')) {
+    if (e.key==='ArrowRight') pvMove(+1);
+    if (e.key==='ArrowLeft')  pvMove(-1);
+  }
+});
+
+init();
+</script>
+
+<!--
+════════════════════════════════════════════════════
+📖  GUÍA DE CONFIGURACIÓN — LEE ESTO PRIMERO
+════════════════════════════════════════════════════
+
+PASO 1 — CREA LA GOOGLE SHEET
+──────────────────────────────
+1. Ve a sheets.google.com → Nueva hoja
+2. Ponle nombre a la pestaña: Hoja1  (o lo que quieras, actualiza SHEET_TAB en el código)
+3. Fila 1 = encabezados (la app los ignora automáticamente):
+      A1: type    B1: title    C1: message    D1: imageUrl
+4. Desde la fila 2 en adelante, cada fila = un día:
+   Columna A (type):    foto | carta | gesto
+   Columna B (title):   Frase corta que aparece como título
+   Columna C (message): Tu mensaje completo (puedes usar saltos de línea normales)
+   Columna D (imageUrl): Link de imagen (opcional, deja vacío si no hay)
+
+PASO 2 — PUBLICA LA HOJA
+──────────────────────────
+Archivo → Compartir → Publicar en la web
+  · Selecciona la pestaña "Hoja1"
+  · Formato: CSV
+  · Clic en "Publicar"
+  · (Esto NO comparte tu Drive, solo esa hoja específica como datos)
+
+PASO 3 — COPIA EL ID DE TU SHEET
+──────────────────────────────────
+URL de tu sheet:
+  https://docs.google.com/spreadsheets/d/  👉ABC123XYZ👈  /edit
+Copia la parte entre /d/ y /edit → pégala en SHEET_ID arriba en el código
+
+PASO 4 — IMÁGENES (DRIVE)
+──────────────────────────
+1. Sube la foto a Google Drive
+2. Clic derecho → Compartir → Cualquier persona con el enlace → Lector
+3. Tu link: https://drive.google.com/file/d/ABC123/view
+4. Cámbialo a:  https://drive.google.com/uc?export=view&id=ABC123
+5. Pega ese link en la columna D de tu fila
+
+PASO 5 — SUBE A GITHUB PAGES (gratis)
+───────────────────────────────────────
+1. Crea cuenta en github.com
+2. Nuevo repositorio → nombre: parami (o el que quieras) → Public
+3. Sube este archivo como index.html
+4. Settings → Pages → Branch: main → / (root) → Save
+5. Tu link queda:  https://TU_USUARIO.github.io/parami
+
+PASO 6 — DÍA A DÍA
+─────────────────────
+· Agrega una fila nueva a la Sheet cada día (o prepáralas todas de una vez)
+· La app lee la Sheet en tiempo real → tu novia ve el contenido nuevo al abrir el link
+· El día cambia a las 9 PM hora Perú (cambia ROLLOVER_HOUR si quieres otra hora)
+
+MODO PREVIEW (solo tú)
+────────────────────────
+· Ctrl+P → activa/desactiva
+· Flechas ← → para navegar días
+· No afecta lo que ve tu novia
+
+════════════════════════════════════════════════════
+-->
+
+</body>
+</html>
