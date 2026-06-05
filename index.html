@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alelove</title>
+<title>Para ti, cada día</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=DM+Sans:wght@200;300;400&display=swap" rel="stylesheet">
 <style>
 /* ── DESIGN TOKENS ─────────────────────────────── */
@@ -527,16 +527,31 @@ const CRACKS     = 5;
 
 // ── TIME / DAY LOGIC ────────────────────────────
 function peruNow() {
-  // UTC-5
+  // Returns an object with Peru date/time components (UTC-5)
+  const utc = new Date();
+  const peruMs = utc.getTime() - 5 * 3600000;
+  const d = new Date(peruMs);
+  return {
+    year:  d.getUTCFullYear(),
+    month: d.getUTCMonth() + 1,
+    day:   d.getUTCDate(),
+    hours: d.getUTCHours(),
+    // YYYY-MM-DD string
+    dateStr: d.getUTCFullYear() + '-' +
+             String(d.getUTCMonth()+1).padStart(2,'0') + '-' +
+             String(d.getUTCDate()).padStart(2,'0')
+  };
+}
+
+function peruNowForDisplay() {
+  // Returns a JS Date shifted to Peru time for toLocaleDateString use
   return new Date(new Date().getTime() - 5 * 3600000);
 }
 
 function getStartDate() {
   let s = localStorage.getItem(START_KEY);
   if (!s) {
-    // Store today's date in Peru time as YYYY-MM-DD
-    const now = peruNow();
-    s = now.toISOString().slice(0,10);
+    s = peruNow().dateStr;
     localStorage.setItem(START_KEY, s);
   }
   return s; // 'YYYY-MM-DD'
@@ -544,14 +559,21 @@ function getStartDate() {
 
 function daysSinceStart() {
   const startStr = getStartDate();
-  const start = new Date(startStr + 'T00:00:00');
-  const now    = peruNow();
-  // Current "day" flips at ROLLOVER_HOUR
-  const effective = new Date(now);
-  if (now.getHours() < ROLLOVER_HOUR) {
-    effective.setDate(effective.getDate() - 1);
+  const peru = peruNow();
+
+  // If before rollover hour, we're still on the "previous" day
+  let effectiveDateStr = peru.dateStr;
+  if (peru.hours < ROLLOVER_HOUR) {
+    // subtract one day
+    const d = new Date(peru.year, peru.month - 1, peru.day - 1);
+    effectiveDateStr = d.getFullYear() + '-' +
+                       String(d.getMonth()+1).padStart(2,'0') + '-' +
+                       String(d.getDate()).padStart(2,'0');
   }
-  const diffMs = new Date(effective.toISOString().slice(0,10) + 'T00:00:00') - start;
+
+  const start     = new Date(startStr + 'T00:00:00');
+  const effective = new Date(effectiveDateStr + 'T00:00:00');
+  const diffMs    = effective - start;
   return Math.max(0, Math.floor(diffMs / 86400000));
 }
 
@@ -561,8 +583,8 @@ function currentIdx() {
 
 // ── FORMAT DATE ──────────────────────────────────
 function fmtDate(offsetDays = 0) {
-  const d = peruNow();
-  d.setDate(d.getDate() - offsetDays);
+  const d = peruNowForDisplay();
+  d.setDate(d.getUTCDate() - offsetDays);
   return d.toLocaleDateString('es-PE', { weekday:'long', day:'numeric', month:'long' });
 }
 
