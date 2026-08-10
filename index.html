@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Para ti, cada día</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Newsreader:ital,opsz,wght@0,6..72,300..500;1,6..72,300..500&family=Karla:wght@300..600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   PAPELERÍA NOCTURNA
+   Una carta de papel sobre un fondo de tinta violeta.
+   ═══════════════════════════════════════════════════ */
+
+:root{
+  /* ground — aubergine ink */
+  --ink:        #241633;
+  --ink-deep:   #180E24;
+  --velvet-s:   #372255;
+  --velvet-2:   #2C1A45;
+
+  /* accents */
+  --orchid:     #A972D9;
+  --lilac:      #D9BEF2;
+  --lilac-soft: rgba(217,190,242,.55);
+  --blush:      #F0B8D4;
+  --gilt:       #DDAE5C;
+
+  /* paper — the letter itself */
+  --paper:      #F7F1FB;
+  --paper-2:    #EFE4F6;
+  --paper-edge: #DCC9EA;
+  --paper-ink:  #34224C;
+  --text-dim:   #8A76A3;      /* muted ink ON paper (used inline by JS) */
+
+  /* line work on the dark ground */
+  --rule:       rgba(217,190,242,.18);
+  --rule-hi:    rgba(217,190,242,.38);
+
+  --r-paper: 5px;
+  --r-soft: 14px;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+html{-webkit-text-size-adjust:100%}
+
+body{
+  background:var(--ink);
+  color:var(--lilac);
+  font-family:'Karla',system-ui,sans-serif;
+  font-weight:300;
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── envelope lining: the pattern inside a real envelope ── */
+body::before{
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    repeating-linear-gradient( 45deg, rgba(217,190,242,.030) 0 1px, transparent 1px 15px),
+    repeating-linear-gradient(-45deg, rgba(217,190,242,.030) 0 1px, transparent 1px 15px);
+}
+/* ── depth + vignette ── */
+body::after{
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 75% 55% at 12% 2%,  rgba(150,80,220,.30) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 45% at 90% 96%, rgba(232,110,170,.16) 0%, transparent 58%),
+    radial-gradient(ellipse 90% 70% at 50% 40%, rgba(120,55,190,.13) 0%, transparent 70%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 45%, var(--ink-deep) 100%);
+}
+
+.wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding:0 22px 110px}
+
+/* ═══════ HEADER ═══════ */
+header{text-align:center;padding:74px 0 30px}
+
+.eyebrow{
+  font-family:'Karla',sans-serif;
+  font-size:10px;font-weight:500;
+  letter-spacing:.42em;text-transform:uppercase;
+  color:var(--orchid);
+  margin-bottom:22px;
+  animation:riseIn .8s cubic-bezier(.2,.7,.3,1) both;
+}
+
+header h1{
+  font-family:'Fraunces',Georgia,serif;
+  font-optical-sizing:auto;
+  font-size:clamp(38px,9.5vw,60px);
+  font-weight:340;
+  line-height:1.04;
+  letter-spacing:-.022em;
+  color:#F4EAFC;
+  animation:riseIn .9s .08s cubic-bezier(.2,.7,.3,1) both;
+}
+header h1 em{
+  display:block;
+  font-style:italic;
+  font-weight:400;
+  color:var(--gilt);
+  letter-spacing:-.01em;
+}
+
+@keyframes riseIn{
+  from{opacity:0;transform:translateY(16px)}
+  to  {opacity:1;transform:none}
+}
+
+.header-rule{
+  width:1px;height:52px;
+  background:linear-gradient(to bottom,transparent,var(--rule-hi),transparent);
+  margin:26px auto 0;
+  animation:riseIn 1s .18s cubic-bezier(.2,.7,.3,1) both;
+}
+
+/* ═══════ DATE LINE — like the date on a letter ═══════ */
+.date-badge{
+  display:flex;align-items:center;gap:14px;
+  margin:0 auto 46px;
+  font-family:'Karla',sans-serif;
+  font-size:11px;font-weight:400;
+  letter-spacing:.2em;text-transform:uppercase;
+  color:var(--lilac-soft);
+  animation:riseIn 1s .26s cubic-bezier(.2,.7,.3,1) both;
+}
+.date-badge::before,.date-badge::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(to right,transparent,var(--rule));
+}
+.date-badge::after{background:linear-gradient(to left,transparent,var(--rule))}
+
+.date-badge .day-counter{
+  font-family:'Fraunces',serif;
+  font-size:13px;font-weight:500;font-style:italic;
+  letter-spacing:.02em;text-transform:none;
+  color:var(--gilt);
+}
+
+/* ═══════ LOADING ═══════ */
+#loadingState{
+  display:flex;flex-direction:column;align-items:center;gap:20px;
+  padding:70px 0;text-align:center;
+}
+.spinner{
+  width:30px;height:30px;
+  border:1.5px solid rgba(217,190,242,.16);
+  border-top-color:var(--orchid);
+  border-radius:50%;
+  animation:spin .85s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{
+  font-size:10px;letter-spacing:.35em;text-transform:uppercase;
+  color:var(--lilac-soft);
+}
+
+/* ═══════ ERROR ═══════ */
+#errorState{
+  display:none;text-align:center;padding:44px 26px;
+  background:rgba(240,140,170,.05);
+  border:1px solid rgba(240,140,170,.22);
+  border-radius:var(--r-soft);
+  margin-bottom:20px;
+}
+.error-icon{font-size:26px;margin-bottom:14px;opacity:.85}
+.error-title{
+  font-family:'Fraunces',serif;font-size:19px;font-weight:400;
+  color:var(--blush);margin-bottom:8px;
+}
+.error-msg{font-size:13px;line-height:1.7;color:var(--lilac-soft)}
+
+/* ═══════ AÚN NO EMPIEZA ═══════ */
+#soonState{
+  display:none;text-align:center;
+  padding:46px 28px 42px;
+  background:rgba(217,190,242,.035);
+  border:1px solid var(--rule);
+  border-radius:var(--r-soft);
+  margin-bottom:18px;
+}
+.soon-mark{
+  font-size:15px;color:var(--gilt);
+  margin-bottom:18px;letter-spacing:.4em;
+  animation:breathe 3s ease-in-out infinite;
+}
+.soon-title{
+  font-family:'Fraunces',serif;
+  font-size:27px;font-weight:400;font-style:italic;
+  color:#F0E3FB;margin-bottom:14px;letter-spacing:-.01em;
+}
+.soon-msg{
+  font-family:'Newsreader',serif;
+  font-size:15.5px;font-weight:300;line-height:1.8;
+  color:var(--lilac);
+}
+.soon-msg strong{
+  display:inline-block;margin-top:6px;
+  font-weight:400;color:var(--gilt);
+  text-transform:capitalize;
+}
+.soon-note{
+  margin-top:20px;
+  font-family:'Karla',sans-serif;
+  font-size:9.5px;font-weight:400;
+  letter-spacing:.24em;text-transform:uppercase;
+  color:var(--lilac-soft);
+}
+
+/* ═══════ ENVELOPE ═══════ */
+#envelopeScene{
+  display:none;                 /* JS flips to flex */
+  flex-direction:column;align-items:center;
+  gap:26px;padding:26px 20px 48px;
+}
+.envelope-hint{
+  font-size:10px;letter-spacing:.38em;text-transform:uppercase;
+  font-weight:400;color:var(--lilac-soft);
+  animation:breathe 2.6s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.42}50%{opacity:.95}}
+
+.envelope-wrap{
+  cursor:pointer;user-select:none;position:relative;
+  -webkit-tap-highlight-color:transparent;
+  border-radius:10px;
+}
+.envelope-wrap:focus-visible{outline:2px solid var(--orchid);outline-offset:10px}
+.envelope-svg{
+  width:224px;height:auto;display:block;
+  filter:drop-shadow(0 14px 34px rgba(90,30,150,.5));
+  transition:transform .16s cubic-bezier(.3,.8,.4,1);
+}
+.envelope-wrap:hover .envelope-svg{transform:translateY(-3px) scale(1.015)}
+.envelope-wrap:active .envelope-svg{transform:scale(.965)}
+
+.envelope-wrap.shake{animation:shake .36s cubic-bezier(.36,.07,.19,.97)}
+@keyframes shake{
+  0%,100%{transform:rotate(0) translateX(0)}
+  18%{transform:translateX(-8px) rotate(-2.6deg)}
+  38%{transform:translateX(8px)  rotate(2.6deg)}
+  58%{transform:translateX(-5px) rotate(-1.5deg)}
+  78%{transform:translateX(5px)  rotate(1.5deg)}
+}
+.envelope-wrap.opening{animation:openUp .85s cubic-bezier(.45,0,.25,1) forwards}
+@keyframes openUp{
+  0%  {transform:scale(1) rotate(0);opacity:1}
+  28% {transform:scale(1.2) rotate(-4deg);opacity:1}
+  62% {transform:scale(.82) rotate(3deg);opacity:.55}
+  100%{transform:scale(0) rotate(9deg);opacity:0}
+}
+
+/* progress — five seals to break */
+.crack-dots{display:flex;gap:10px}
+.crack-dot{
+  width:6px;height:6px;border-radius:50%;
+  background:transparent;
+  border:1px solid rgba(240,184,212,.35);
+  transition:all .32s cubic-bezier(.3,.8,.4,1);
+}
+.crack-dot.lit{
+  background:var(--blush);
+  border-color:var(--blush);
+  box-shadow:0 0 10px rgba(240,184,212,.75);
+  transform:scale(1.18);
+}
+
+/* ═══════ THE LETTER — paper on ink (signature move) ═══════ */
+#todayCard{
+  display:none;
+  position:relative;
+  background:linear-gradient(168deg,var(--paper) 0%,var(--paper-2) 100%);
+  border-radius:var(--r-paper);
+  overflow:hidden;
+  margin-bottom:18px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.6) inset,
+    0 2px 6px rgba(40,10,70,.28),
+    0 18px 44px rgba(40,10,70,.42),
+    0 40px 90px rgba(90,30,150,.22);
+}
+#todayCard.revealed{
+  display:block;
+  animation:letterIn .9s cubic-bezier(.16,.84,.34,1) both;
+}
+/* inline display:none is set by JS on this path — !important restores it */
+#todayCard.visible{display:block!important;opacity:1}
+
+@keyframes letterIn{
+  from{opacity:0;transform:translateY(38px) scale(.955) rotate(-.6deg)}
+  to  {opacity:1;transform:none}
+}
+
+/* letterhead rule across the top */
+.card-glow{
+  position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--orchid),var(--blush) 45%,var(--gilt));
+  pointer-events:none;
+}
+/* laid-paper texture */
+#todayCard::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(0deg,rgba(52,34,76,.028) 0 1px,transparent 1px 4px);
+}
+
+.today-label{
+  position:absolute;top:20px;right:20px;z-index:2;
+  font-size:8.5px;font-weight:600;
+  letter-spacing:.3em;text-transform:uppercase;
+  color:#8E4E86;
+  background:rgba(240,184,212,.3);
+  border:1px solid rgba(190,90,150,.3);
+  padding:4px 11px;border-radius:100px;
+}
+
+.ghost-num{
+  position:absolute;top:8px;left:20px;z-index:0;
+  font-family:'Fraunces',serif;
+  font-size:96px;font-weight:600;line-height:1;
+  color:rgba(52,34,76,.055);
+  pointer-events:none;user-select:none;
+}
+
+.card-inner{position:relative;z-index:1;padding:34px 30px 26px}
+
+.type-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  font-family:'Karla',sans-serif;
+  font-size:9px;font-weight:600;
+  letter-spacing:.28em;text-transform:uppercase;
+  color:#9A5FC4;
+  margin:6px 0 20px;
+}
+
+.card-image{
+  display:none;
+  width:100%;margin-bottom:24px;
+  border-radius:3px;overflow:hidden;
+  border:1px solid var(--paper-edge);
+  box-shadow:0 3px 12px rgba(52,34,76,.16);
+}
+.card-image.show{display:block}
+.card-image img{width:100%;max-height:420px;object-fit:cover;display:block}
+
+.card-title{
+  font-family:'Fraunces',Georgia,serif;
+  font-optical-sizing:auto;
+  font-size:clamp(23px,5.4vw,28px);
+  font-weight:400;font-style:italic;
+  line-height:1.24;letter-spacing:-.014em;
+  color:#5B2E86;
+  margin-bottom:16px;
+}
+
+.card-body{
+  font-family:'Newsreader',Georgia,serif;
+  font-size:16.5px;font-weight:300;
+  line-height:1.82;letter-spacing:.004em;
+  color:var(--paper-ink);
+  white-space:pre-wrap;
+}
+
+/* tear-off line */
+.card-rule{
+  height:1px;margin:26px 0 16px;
+  background-image:linear-gradient(90deg,var(--paper-edge) 52%,transparent 0);
+  background-size:7px 1px;background-repeat:repeat-x;
+}
+
+.card-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  font-family:'Karla',sans-serif;
+}
+.heart{
+  color:#D8548E;font-size:16px;display:inline-block;
+  animation:beat 2s ease-in-out infinite;
+}
+@keyframes beat{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.24);opacity:1}}
+
+/* ═══════ SECTION LABELS ═══════ */
+.section-label{
+  display:flex;align-items:center;gap:14px;
+  margin:52px 0 18px;
+  font-family:'Karla',sans-serif;
+  font-size:9px;font-weight:500;
+  letter-spacing:.4em;text-transform:uppercase;
+  color:var(--lilac-soft);
+}
+.section-label::before,.section-label::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(to right,transparent,var(--rule));
+}
+.section-label::after{background:linear-gradient(to left,transparent,var(--rule))}
+
+/* ═══════ PAST — filed letters ═══════ */
+.past-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:11px;margin-bottom:44px;
+}
+.past-card{
+  position:relative;overflow:hidden;
+  background:var(--velvet-2);
+  border:1px solid var(--rule);
+  border-left:2px solid rgba(169,114,217,.5);
+  border-radius:3px 10px 10px 3px;
+  padding:16px 15px;cursor:pointer;
+  transition:transform .24s cubic-bezier(.3,.8,.4,1),border-color .24s,background .24s;
+}
+.past-card:hover{
+  transform:translateY(-3px);
+  background:var(--velvet-s);
+  border-color:var(--rule-hi);
+  border-left-color:var(--blush);
+}
+.past-card:focus-visible{outline:2px solid var(--orchid);outline-offset:3px}
+.past-num{
+  font-family:'Fraunces',serif;
+  font-size:25px;font-weight:400;font-style:italic;
+  color:var(--lilac);display:block;line-height:1;
+}
+.past-type{
+  font-size:8.5px;font-weight:500;
+  letter-spacing:.24em;text-transform:uppercase;
+  color:var(--orchid);
+  margin:8px 0 4px;display:block;
+}
+.past-preview{
+  font-family:'Newsreader',serif;
+  font-size:12.5px;font-weight:300;line-height:1.5;
+  color:var(--lilac-soft);
+  overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+}
+
+/* ═══════ FUTURE — sealed, not yet written ═══════ */
+.future-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(94px,1fr));gap:9px;
+}
+.future-card{
+  background:rgba(217,190,242,.022);
+  border:1px dashed rgba(217,190,242,.17);
+  border-radius:8px;
+  padding:15px 10px;text-align:center;
+}
+.future-num{
+  font-family:'Fraunces',serif;
+  font-size:19px;font-weight:400;font-style:italic;
+  color:rgba(217,190,242,.34);display:block;line-height:1;
+}
+.lock{font-size:11px;display:block;margin-top:6px;opacity:.3}
+
+/* ═══════ MODAL ═══════ */
+.modal-overlay{
+  position:fixed;inset:0;z-index:100;
+  background:rgba(16,8,28,.9);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{
+  position:relative;
+  background:linear-gradient(168deg,var(--paper) 0%,var(--paper-2) 100%);
+  border-radius:var(--r-paper);
+  max-width:540px;width:100%;max-height:88vh;overflow-y:auto;
+  box-shadow:0 24px 70px rgba(20,5,40,.6);
+  transform:translateY(20px) scale(.97);transition:transform .32s cubic-bezier(.16,.84,.34,1);
+}
+.modal::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;z-index:2;
+  background:linear-gradient(90deg,var(--orchid),var(--blush) 45%,var(--gilt));
+}
+.modal-overlay.open .modal{transform:none}
+.modal-inner{padding:34px 30px;position:relative}
+.modal-close{
+  position:absolute;top:14px;right:14px;z-index:3;
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(52,34,76,.07);border:1px solid rgba(52,34,76,.1);
+  color:#6B5385;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;
+}
+.modal-close:hover{background:rgba(52,34,76,.14);color:var(--paper-ink)}
+.modal-close:focus-visible{outline:2px solid var(--orchid);outline-offset:2px}
+
+/* ═══════ PREVIEW BAR (solo Henry) ═══════ */
+.preview-bar{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:rgba(44,26,69,.94);
+  border:1px solid var(--rule-hi);
+  border-radius:100px;padding:8px 16px;
+  display:flex;align-items:center;gap:12px;
+  font-size:9px;font-weight:500;letter-spacing:.24em;
+  color:var(--orchid);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  white-space:nowrap;z-index:50;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+  box-shadow:0 10px 34px rgba(15,5,30,.55);
+}
+.preview-bar.on{opacity:1;pointer-events:all}
+.preview-bar>span:nth-child(3){
+  font-family:'Fraunces',serif;font-size:12px;font-style:italic;
+  letter-spacing:0;color:var(--lilac);
+}
+.preview-bar button{
+  background:rgba(169,114,217,.16);
+  border:1px solid rgba(169,114,217,.34);
+  color:var(--lilac);border-radius:100px;
+  padding:3px 11px;font-size:13px;cursor:pointer;
+  font-family:'Karla',sans-serif;line-height:1.3;
+  transition:all .2s;
+}
+.preview-bar button:hover{background:rgba(169,114,217,.32)}
+.preview-bar .exit-btn{
+  font-size:9px;padding:4px 10px;letter-spacing:.14em;
+  color:var(--lilac-soft);
+}
+
+/* ═══════ CONFETTI ═══════ */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:200}
+.cp{position:absolute;animation:fall linear forwards}
+@keyframes fall{
+  0%  {transform:translateY(-10px) rotate(0);opacity:1}
+  100%{transform:translateY(106vh) rotate(760deg);opacity:0}
+}
+
+/* ═══════ SCROLLBAR ═══════ */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--rule-hi);border-radius:2px}
+
+/* ═══════ RESPONSIVE ═══════ */
+@media(max-width:480px){
+  header{padding:56px 0 24px}
+  .wrap{padding:0 18px 96px}
+  .card-inner{padding:28px 21px 22px}
+  .ghost-num{font-size:76px;top:10px;left:16px}
+  .past-grid{grid-template-columns:repeat(2,1fr)}
+  .future-grid{grid-template-columns:repeat(3,1fr)}
+  .modal-inner{padding:28px 22px}
+  .card-body{font-size:16px}
+}
+
+/* ═══════ REDUCED MOTION ═══════ */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">For my baby push</p>
+    <h1>For you love,<em>and pench</em></h1>
+    <div class="header-rule"></div>
+  </header>
+
+  <div class="date-badge">
+    <span id="dateText"></span>
+    <span class="day-counter" id="dayCounter"></span>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loadingState">
+    <div class="spinner"></div>
+    <p class="loading-text">Abriendo</p>
+  </div>
+
+  <!-- ERROR -->
+  <div id="errorState">
+    <div class="error-icon">✉</div>
+    <div class="error-title">La carta no llegó</div>
+    <div class="error-msg" id="errorMsg">Revisa tu conexión o vuelve más tarde.</div>
+  </div>
+
+  <!-- AÚN NO EMPIEZA -->
+  <div id="soonState">
+    <div class="soon-mark">✦</div>
+    <div class="soon-title">Todavía no</div>
+    <p class="soon-msg">La primera carta llega el<br><strong id="soonDate"></strong></p>
+    <p class="soon-note">Desde ahí: una los lunes y otra los viernes.</p>
+  </div>
+
+  <!-- ENVELOPE -->
+  <div id="envelopeScene">
+    <p class="envelope-hint">Rompe el sello</p>
+    <div class="envelope-wrap" id="envWrap" onclick="clickEnv()" tabindex="0" role="button" aria-label="Abrir el sobre de hoy">
+      <svg class="envelope-svg" viewBox="0 0 224 164" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="eg" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%"   stop-color="#4A2D73"/>
+            <stop offset="100%" stop-color="#301C4E"/>
+          </linearGradient>
+          <linearGradient id="fg" x1="0%" y1="0%" x2="50%" y2="100%">
+            <stop offset="0%"   stop-color="#5C3A8C"/>
+            <stop offset="100%" stop-color="#3C2560"/>
+          </linearGradient>
+          <linearGradient id="wax" x1="20%" y1="10%" x2="80%" y2="90%">
+            <stop offset="0%"   stop-color="#F2C6DD"/>
+            <stop offset="55%"  stop-color="#D8548E"/>
+            <stop offset="100%" stop-color="#9E2F63"/>
+          </linearGradient>
+        </defs>
+
+        <!-- body -->
+        <rect x="5" y="32" width="214" height="127" rx="7"
+              fill="url(#eg)" stroke="rgba(217,190,242,.42)" stroke-width="1"/>
+
+        <!-- inner lining pattern -->
+        <path d="M5 32 L112 97 L219 32" fill="none" stroke="rgba(217,190,242,.13)" stroke-width="1"/>
+        <path d="M5 159 L112 97 L219 159" fill="none" stroke="rgba(217,190,242,.10)" stroke-width="1"/>
+
+        <!-- flap -->
+        <path d="M5 32 L112 6 L219 32 L112 92 Z"
+              fill="url(#fg)" stroke="rgba(217,190,242,.36)" stroke-width="1"/>
+        <path d="M5 32 L112 6 L219 32" fill="none" stroke="rgba(240,184,212,.22)" stroke-width="1"/>
+
+        <!-- wax seal -->
+        <circle cx="112" cy="77" r="15.5" fill="url(#wax)" stroke="rgba(255,220,235,.5)" stroke-width="1"/>
+        <circle cx="112" cy="77" r="11"   fill="none" stroke="rgba(90,20,55,.35)" stroke-width=".9"/>
+        <text x="112" y="82.5" text-anchor="middle" font-size="12"
+              fill="rgba(255,235,245,.95)" font-family="Georgia,serif">♥</text>
+
+        <!-- cracks — one per click -->
+        <line     id="c1" x1="98"  y1="64" x2="111" y2="55"
+                  stroke="#FFE3EF" stroke-width="1.6" stroke-linecap="round" opacity="0"/>
+        <polyline id="c2" points="81,83 96,75 108,81 121,71 133,77"
+                  stroke="#FFE3EF" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0"/>
+        <line     id="c3" x1="71"  y1="93" x2="88"  y2="84"
+                  stroke="#F5C9DE" stroke-width="1.6" stroke-linecap="round" opacity="0"/>
+        <polyline id="c4" points="101,58 112,50 121,59 128,45"
+                  stroke="#E9D2FA" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0"/>
+        <polyline id="c5" points="60,73 82,88 103,81 113,95 133,83 154,91 168,78"
+                  stroke="#FFE3EF" stroke-width="2.1" stroke-linecap="round" fill="none" opacity="0"/>
+      </svg>
+    </div>
+    <div class="crack-dots" id="dots">
+      <div class="crack-dot" id="d0"></div>
+      <div class="crack-dot" id="d1"></div>
+      <div class="crack-dot" id="d2"></div>
+      <div class="crack-dot" id="d3"></div>
+      <div class="crack-dot" id="d4"></div>
+    </div>
+  </div>
+
+  <!-- TODAY -->
+  <div id="todayCard">
+    <div class="card-glow"></div>
+    <div class="today-label">Hoy</div>
+    <div class="ghost-num" id="ghostNum"></div>
+    <div class="card-inner">
+      <div class="type-pill"><span id="typeIcon"></span><span id="typeLabel"></span></div>
+      <div class="card-image" id="cardImage"><img id="cardImg" src="" alt=""></div>
+      <div class="card-title" id="cardTitle"></div>
+      <div class="card-body"  id="cardBody"></div>
+      <div class="card-rule"></div>
+      <div class="card-foot">
+        <span id="cardDate" style="font-size:11px;color:var(--text-dim);letter-spacing:.5px"></span>
+        <span class="heart">♥</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAST -->
+  <div id="pastSection" style="display:none">
+    <div class="section-label">Cartas anteriores</div>
+    <div class="past-grid" id="pastGrid"></div>
+  </div>
+
+  <!-- FUTURE -->
+  <div id="futureSection" style="display:none">
+    <div class="section-label">Próximas cartas</div>
+    <div class="future-grid" id="futureGrid"></div>
+  </div>
+
+</div><!-- /wrap -->
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="maybeCloseModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()" aria-label="Cerrar">✕</button>
+    <div class="modal-inner" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- PREVIEW BAR -->
+<div class="preview-bar" id="previewBar">
+  <span>PREVIEW</span>
+  <button onclick="pvMove(-1)" aria-label="Carta anterior">←</button>
+  <span id="pvLabel">Carta 1</span>
+  <button onclick="pvMove(+1)" aria-label="Carta siguiente">→</button>
+  <button class="exit-btn" onclick="pvExit()">Salir</button>
+</div>
+
+<div id="confetti"></div>
+
+<script>
+// ════════════════════════════════════════════════
+// ⚙️  CONFIGURACIÓN — edita solo estas líneas
+// ════════════════════════════════════════════════
+
+// 1. ID de tu Google Sheet (la parte larga de la URL)
+//    https://docs.google.com/spreadsheets/d/  👉ESTE_ID👈  /edit
+const SHEET_ID = '1jCmRBikJ4Ms6Nmu1aLy5Ic3EHjgtIHbblRPGrSEwAWg';
+
+// 2. Nombre exacto de la pestaña (por defecto "Hoja 1")
+const SHEET_TAB = 'Hoja1';
+
+// 3. HORARIO DE ENTREGAS (hora Perú, UTC-5)
+//    Dos cartas por semana: lunes 8:00 AM y viernes 9:00 PM
+//    FIRST_RELEASE = momento exacto de la PRIMERA carta.
+//    Formato: (año, mes-1, día, hora, minuto)  ← ojo: el mes va de 0 a 11
+const FIRST_RELEASE = Date.UTC(2026, 7, 10, 8, 0);   // lunes 10 ago 2026, 8:00 AM
+
+// ════════════════════════════════════════════════
+
+// El calendario ahora es fijo en el código: no se guarda fecha de inicio
+// por navegador. Limpiamos las claves viejas para resetear contadores previos.
+try { localStorage.removeItem('amor_start_v2'); localStorage.removeItem('amor_start_date_v1'); } catch(e){}
+const ENV_KEY    = 'amor_env_';       // + dayIndex
+const PV_KEY     = 'amor_preview';
+
+let sheetData    = [];   // rows from Sheets
+let previewMode  = false;
+let previewIdx   = 0;
+let envClicks    = 0;
+const CRACKS     = 5;
+
+// ── HORARIO: lunes 8 AM y viernes 9 PM (Perú) ────
+const WEEK_MS  = 7 * 24 * 3600 * 1000;
+// Segunda ranura de la semana: 4 días y 13 h después del lunes 8 AM = viernes 9 PM
+const SLOT_MON = FIRST_RELEASE;
+const SLOT_FRI = FIRST_RELEASE + (4 * 24 + 13) * 3600 * 1000;
+
+// "Ahora" desplazado a Perú: leerlo con getters UTC da la hora local peruana
+function peruMs() {
+  return Date.now() - 5 * 3600000;
+}
+
+// Cuántas veces ya ocurrió una ranura semanal hasta ahora
+function slotsPassed(anchor, now) {
+  if (now < anchor) return 0;
+  return Math.floor((now - anchor) / WEEK_MS) + 1;
+}
+
+// Total de cartas publicadas (0 = todavía no empieza)
+function releasesOut() {
+  const now = peruMs();
+  return slotsPassed(SLOT_MON, now) + slotsPassed(SLOT_FRI, now);
+}
+
+// Índice 0-based de la carta actual; -1 si aún no arranca
+function currentRelease() {
+  return releasesOut() - 1;
+}
+
+// Momento (ms, escala Perú) en que se publica la carta i
+function releaseMs(i) {
+  const week = Math.floor(i / 2);
+  return (i % 2 === 0 ? SLOT_MON : SLOT_FRI) + week * WEEK_MS;
+}
+
+function currentIdx() {
+  if (previewMode) return previewIdx;
+  const r = currentRelease();
+  if (r < 0) return -1;
+  return Math.min(r, Math.max(0, sheetData.length - 1));
+}
+
+// ── FORMATO DE FECHA ─────────────────────────────
+// ms viene ya desplazado a Perú, por eso se lee en UTC
+function fmtMs(ms) {
+  return new Date(ms).toLocaleDateString('es-PE', {
+    weekday:'long', day:'numeric', month:'long', timeZone:'UTC'
+  });
+}
+function fmtMsHora(ms) {
+  const d = new Date(ms);
+  let h = d.getUTCHours();
+  const m = String(d.getUTCMinutes()).padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return fmtMs(ms) + ' a las ' + h + ':' + m + ' ' + ampm;
+}
+
+// ── GOOGLE SHEETS FETCH ──────────────────────────
+// Columns expected (0-indexed):
+//   A = type   (foto | carta | gesto)
+//   B = title
+//   C = message
+//   D = imageUrl  (optional)
+async function loadSheet() {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+  const res  = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const csv  = await res.text();
+  return parseCSV(csv);
+}
+
+function parseCSV(csv) {
+  // Simple but robust CSV parser (handles quoted fields with commas/newlines)
+  const rows = [];
+  let row = [], field = '', inQ = false;
+  for (let i = 0; i < csv.length; i++) {
+    const ch = csv[i], next = csv[i+1];
+    if (inQ) {
+      if (ch === '"' && next === '"') { field += '"'; i++; }
+      else if (ch === '"') inQ = false;
+      else field += ch;
+    } else {
+      if (ch === '"') { inQ = true; }
+      else if (ch === ',') { row.push(field.trim()); field = ''; }
+      else if (ch === '\n' || (ch === '\r' && next === '\n')) {
+        if (ch === '\r') i++;
+        row.push(field.trim()); rows.push(row); row = []; field = '';
+      } else { field += ch; }
+    }
+  }
+  if (field || row.length) { row.push(field.trim()); rows.push(row); }
+  // Remove header row if first cell looks like a header
+  if (rows.length && /^type|^tipo/i.test(rows[0][0])) rows.shift();
+  return rows.filter(r => r.length >= 3 && r[0]);
+}
+
+function rowToDay(r) {
+  return {
+    type:     (r[0]||'carta').toLowerCase().trim(),
+    title:    r[1] || '',
+    message:  r[2] || '',
+    imageUrl: r[3] || ''
+  };
+}
+
+// ── TYPE META ────────────────────────────────────
+function typeMeta(t) {
+  return { foto:{icon:'📷',label:'Foto de nosotros'}, carta:{icon:'✉️',label:'Una carta para ti'}, gesto:{icon:'🎁',label:'Gesto del día'} }[t] || {icon:'♥',label:'Sorpresa'};
+}
+
+// ── RENDER TODAY ─────────────────────────────────
+function renderToday(idx) {
+  const raw  = sheetData[idx];
+  const data = raw ? rowToDay(raw) : { type:'carta', title:'Cada día te quiero más', message:'Hoy no tengo una sorpresa preparada, pero sí tengo algo real:\n\nTe quiero. Mucho. Y eso no cambia ningún día.', imageUrl:'' };
+  const { icon, label } = typeMeta(data.type);
+  const num = idx + 1;
+
+  document.getElementById('ghostNum').textContent  = String(num).padStart(2,'0');
+  document.getElementById('typeIcon').textContent  = icon;
+  document.getElementById('typeLabel').textContent = label;
+  document.getElementById('cardTitle').textContent = data.title;
+  document.getElementById('cardBody').textContent  = data.message;
+  document.getElementById('cardDate').textContent  = fmtMs(releaseMs(idx));
+
+  const imgBox = document.getElementById('cardImage');
+  const img    = document.getElementById('cardImg');
+  if (data.imageUrl) {
+    img.src = data.imageUrl;
+    imgBox.classList.add('show');
+  } else {
+    imgBox.classList.remove('show');
+  }
+}
+
+// ── ENVELOPE ─────────────────────────────────────
+function envAlreadyOpen(idx) {
+  return !previewMode && !!sessionStorage.getItem(ENV_KEY + idx);
+}
+
+function showContent(idx, animate) {
+  document.getElementById('envelopeScene').style.display = 'none';
+  renderToday(idx);
+  const card = document.getElementById('todayCard');
+  // Reset all state first
+  card.className = '';
+  card.style.cssText = '';
+  card.style.display = 'none';
+  void card.offsetWidth; // force reflow
+  if (animate) {
+    card.style.display = 'block';
+    void card.offsetWidth; // force reflow again
+    card.classList.add('revealed');
+  } else {
+    card.classList.add('visible');
+  }
+  renderPast(idx);
+  renderFuture(idx);
+}
+
+function resetEnvelope() {
+  envClicks = 0;
+  for (let i=1;i<=CRACKS;i++){ const c=document.getElementById('c'+i); if(c) c.style.opacity='0'; }
+  for (let i=0;i<CRACKS;i++)  document.getElementById('d'+i).classList.remove('lit');
+  const w = document.getElementById('envWrap');
+  w.classList.remove('opening','shake');
+}
+
+function initEnvelope(idx) {
+  resetEnvelope();
+  const card = document.getElementById('todayCard');
+  card.className = '';
+  card.style.cssText = 'display:none';
+
+  if (envAlreadyOpen(idx)) {
+    showContent(idx, false);
+  } else {
+    document.getElementById('envelopeScene').style.display = 'flex';
+  }
+}
+
+function clickEnv() {
+  if (envClicks >= CRACKS) return;
+  envClicks++;
+
+  const w = document.getElementById('envWrap');
+  w.classList.remove('shake'); void w.offsetWidth; w.classList.add('shake');
+
+  const c = document.getElementById('c' + envClicks);
+  if (c) { c.style.transition='opacity 0.15s'; c.style.opacity='1'; }
+  document.getElementById('d'+(envClicks-1)).classList.add('lit');
+
+  if (envClicks >= CRACKS) {
+    setTimeout(() => {
+      w.classList.add('opening');
+      setTimeout(() => {
+        const idx = currentIdx();
+        sessionStorage.setItem(ENV_KEY + idx, '1');
+        showContent(idx, true);
+        burst();
+      }, 820);
+    }, 180);
+  }
+}
+
+// ── PAST DAYS ────────────────────────────────────
+function renderPast(idx) {
+  if (idx === 0) { document.getElementById('pastSection').style.display='none'; return; }
+  document.getElementById('pastSection').style.display='block';
+  const g = document.getElementById('pastGrid');
+  g.innerHTML = '';
+  for (let i = idx-1; i >= 0; i--) {
+    const d = sheetData[i] ? rowToDay(sheetData[i]) : { type:'carta', title:'Una carta especial' };
+    const { icon } = typeMeta(d.type);
+    const el = document.createElement('div');
+    el.className = 'past-card';
+    el.innerHTML = `<span class="past-num">${String(i+1).padStart(2,'0')}</span><span class="past-type">${icon} ${d.type}</span><span class="past-preview">${d.title}</span>`;
+    el.onclick = () => openModal(i, idx);
+    g.appendChild(el);
+  }
+}
+
+// ── FUTURE DAYS ───────────────────────────────────
+function renderFuture(idx) {
+  const remaining = sheetData.length - idx - 1;
+  if (remaining <= 0) { document.getElementById('futureSection').style.display='none'; return; }
+  document.getElementById('futureSection').style.display='block';
+  const g = document.getElementById('futureGrid');
+  g.innerHTML = '';
+  const show = Math.min(remaining, 14);
+  for (let i = idx+1; i <= idx+show; i++) {
+    const el = document.createElement('div');
+    el.className = 'future-card';
+    el.innerHTML = `<span class="future-num">${String(i+1).padStart(2,'0')}</span><span class="lock">🔒</span>`;
+    g.appendChild(el);
+  }
+  if (remaining > show) {
+    const el = document.createElement('div');
+    el.className = 'future-card'; el.style.opacity='.25';
+    el.innerHTML = `<span class="future-num">+${remaining-show}</span><span class="lock">más</span>`;
+    g.appendChild(el);
+  }
+}
+
+// ── MODAL ─────────────────────────────────────────
+function openModal(dayIdx, curIdx) {
+  const raw = sheetData[dayIdx];
+  const d   = raw ? rowToDay(raw) : { type:'carta', title:'Una carta especial', message:'', imageUrl:'' };
+  const { icon, label } = typeMeta(d.type);
+  document.getElementById('modalBody').innerHTML = `
+    <div class="type-pill" style="margin-bottom:14px"><span>${icon}</span><span>${label} · Carta ${dayIdx+1}</span></div>
+    ${d.imageUrl ? `<div class="card-image show" style="margin-bottom:18px"><img src="${d.imageUrl}" alt="" style="width:100%;border-radius:10px;display:block"></div>` : ''}
+    <div class="card-title">${d.title}</div>
+    <div style="height:10px"></div>
+    <div class="card-body">${d.message}</div>
+    <div class="card-rule"></div>
+    <div style="font-size:11px;color:var(--text-dim)">${fmtMs(releaseMs(dayIdx))}</div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function maybeCloseModal(e) { if (e.target===document.getElementById('modalOverlay')) closeModal(); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow=''; }
+
+// ── PREVIEW MODE ──────────────────────────────────
+function pvEnter() {
+  previewMode = true;
+  previewIdx  = Math.max(0, currentIdx());
+  document.getElementById('previewBar').classList.add('on');
+  pvRefresh();
+}
+function pvExit() {
+  previewMode = false;
+  document.getElementById('previewBar').classList.remove('on');
+  pvRefresh();
+}
+function pvMove(d) {
+  previewIdx = Math.max(0, Math.min(sheetData.length-1, previewIdx+d));
+  pvRefresh();
+}
+function pvRefresh() {
+  const idx = currentIdx();
+  document.getElementById('pvLabel').textContent = `Carta ${idx+1}`;
+  document.getElementById('dayCounter').textContent = `· Carta ${idx+1}`;
+  initEnvelope(idx);
+  // hide past/future until envelope is opened in preview
+}
+
+// ── CONFETTI ──────────────────────────────────────
+function burst() {
+  const box = document.getElementById('confetti');
+  const cols = ['#c084fc','#f472b6','#fbbf24','#e0b4ff','#fff','#a78bfa','#f9a8d4'];
+  for (let i=0;i<75;i++) setTimeout(()=>{
+    const p = document.createElement('div');
+    p.className = 'cp';
+    p.style.cssText = `left:${Math.random()*100}%;top:-8px;width:${4+Math.random()*6}px;height:${4+Math.random()*6}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${1.6+Math.random()*2.2}s;`;
+    box.appendChild(p);
+    setTimeout(()=>p.remove(),4500);
+  }, i*22);
+}
+
+
+// ── MAIN ──────────────────────────────────────────
+async function init() {
+
+  // Date badge
+  document.getElementById('dateText').textContent = fmtMs(peruMs());
+
+  try {
+    sheetData = await loadSheet();
+
+    if (sheetData.length === 0) throw new Error('La hoja está vacía. Agrega al menos una fila.');
+
+    // Hide loading
+    document.getElementById('loadingState').style.display = 'none';
+
+    const idx = currentIdx();
+
+    // Todavía no llega la primera carta
+    if (idx < 0) {
+      document.getElementById('soonDate').textContent = fmtMsHora(SLOT_MON);
+      document.getElementById('soonState').style.display = 'block';
+      return;
+    }
+
+    document.getElementById('dayCounter').textContent = `· Carta ${idx+1}`;
+
+    initEnvelope(idx);
+
+  } catch (err) {
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('errorState').style.display   = 'block';
+    document.getElementById('errorMsg').textContent = err.message || 'Error desconocido.';
+    console.error(err);
+  }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey||e.metaKey) && e.key==='p') {
+    e.preventDefault();
+    previewMode ? pvExit() : pvEnter();
+  }
+  if (previewMode && !document.getElementById('modalOverlay').classList.contains('open')) {
+    if (e.key==='ArrowRight') pvMove(+1);
+    if (e.key==='ArrowLeft')  pvMove(-1);
+  }
+});
+
+init();
+</script>
+
+<!--
+════════════════════════════════════════════════════
+📖  GUÍA RÁPIDA — HENRY
+════════════════════════════════════════════════════
+
+TU GOOGLE SHEET (columnas):
+  A = type      → foto | carta | gesto
+  B = title     → frase corta (sale como título)
+  C = message   → el mensaje completo
+  D = imageUrl  → link de imagen (opcional)
+
+AGREGAR UN DÍA:
+  Solo agrega una fila nueva a la Sheet. La página la lee sola.
+
+IMÁGENES (usa imgur, Drive bloquea el embed):
+  1. imgur.com → arrastra la foto
+  2. Clic derecho en la imagen → "Copiar dirección de imagen"
+  3. Pega el link (i.imgur.com/XXXX.jpg) en la columna D
+
+HORARIO: dos cartas por semana (hora Perú)
+  · Lunes  8:00 AM
+  · Viernes 9:00 PM
+  La primera sale el lunes 10 de agosto de 2026 a las 8:00 AM.
+  Para mover el arranque, edita FIRST_RELEASE arriba.
+  Ojo: el mes va de 0 a 11 → Date.UTC(2026, 7, 10, 8, 0) = 10 de AGOSTO.
+
+ORDEN DE LAS FILAS EN LA SHEET:
+  Fila 1 = encabezados (type / title / message / imageUrl)
+  Fila 2 = Carta 1  → lunes 10 ago, 8:00 AM
+  Fila 3 = Carta 2  → viernes 14 ago, 9:00 PM
+  Fila 4 = Carta 3  → lunes 17 ago, 8:00 AM
+  ...y así, alternando lunes y viernes.
+
+MODO PREVIEW (solo tú):
+  Ctrl+P activa/desactiva · flechas ← → para navegar días
+
+EL CONTADOR YA NO SE GUARDA POR NAVEGADOR.
+  El calendario es fijo, así que todos ven la misma carta a la misma hora.
+  No hace falta resetear nada en la computadora de ella.
+
+════════════════════════════════════════════════════
+-->
+
+</body>
+</html>
