@@ -175,6 +175,117 @@ header h1 em{
 }
 .error-msg{font-size:13px;line-height:1.7;color:var(--lilac-soft)}
 
+
+/* ═══════ LA PUERTA ═══════ */
+#app{
+  opacity:0;
+  transition:opacity .7s cubic-bezier(.2,.7,.3,1);
+}
+#app.in{opacity:1}
+
+#lockScreen{
+  display:none;                    /* JS lo pone en flex */
+  position:fixed;inset:0;z-index:300;
+  align-items:center;justify-content:center;
+  padding:26px;
+  background:var(--ink);
+  transition:opacity .48s ease, transform .48s cubic-bezier(.5,0,.75,0);
+}
+#lockScreen::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 55% at 15% 5%,  rgba(150,80,220,.30) 0%, transparent 62%),
+    radial-gradient(ellipse 60% 45% at 88% 95%, rgba(232,110,170,.16) 0%, transparent 58%),
+    radial-gradient(ellipse 120% 90% at 50% 50%, transparent 42%, var(--ink-deep) 100%);
+}
+#lockScreen.gone{opacity:0;transform:scale(1.06);pointer-events:none}
+
+#pwBox{
+  position:relative;z-index:1;
+  width:100%;max-width:370px;text-align:center;
+  animation:riseIn .85s cubic-bezier(.2,.7,.3,1) both;
+}
+#pwBox.nope{animation:nope .45s cubic-bezier(.36,.07,.19,.97)}
+@keyframes nope{
+  0%,100%{transform:translateX(0)}
+  16%{transform:translateX(-9px)}
+  34%{transform:translateX(9px)}
+  52%{transform:translateX(-6px)}
+  70%{transform:translateX(6px)}
+  86%{transform:translateX(-3px)}
+}
+
+.pw-seal{
+  margin-bottom:26px;
+  filter:drop-shadow(0 8px 22px rgba(200,60,120,.35));
+}
+
+.pw-title{
+  font-family:'Fraunces',Georgia,serif;
+  font-size:clamp(30px,8vw,38px);
+  font-weight:340;font-style:italic;
+  letter-spacing:-.02em;line-height:1.1;
+  color:#F4EAFC;margin-bottom:12px;
+}
+.pw-sub{
+  font-family:'Karla',sans-serif;
+  font-size:10px;font-weight:400;
+  letter-spacing:.3em;text-transform:uppercase;
+  color:var(--lilac-soft);margin-bottom:34px;
+}
+
+.pw-field{
+  display:flex;gap:8px;align-items:stretch;
+}
+#pwInput{
+  flex:1;min-width:0;
+  background:rgba(217,190,242,.06);
+  border:1px solid var(--rule);
+  border-radius:100px;
+  padding:13px 20px;
+  font-family:'Karla',sans-serif;
+  font-size:15px;font-weight:400;letter-spacing:.14em;
+  color:var(--lilac);
+  transition:border-color .22s, background .22s;
+}
+#pwInput::placeholder{color:rgba(217,190,242,.26);letter-spacing:.2em}
+#pwInput:focus{
+  outline:none;
+  border-color:rgba(169,114,217,.62);
+  background:rgba(217,190,242,.1);
+}
+#pwBtn{
+  flex-shrink:0;
+  background:linear-gradient(140deg,var(--orchid),#8850BE);
+  border:1px solid rgba(217,190,242,.32);
+  border-radius:100px;
+  padding:13px 22px;
+  font-family:'Karla',sans-serif;
+  font-size:11px;font-weight:600;
+  letter-spacing:.16em;text-transform:uppercase;
+  color:#FBF4FF;cursor:pointer;
+  transition:filter .2s, transform .2s;
+}
+#pwBtn:hover:not(:disabled){filter:brightness(1.14);transform:translateY(-1px)}
+#pwBtn:active:not(:disabled){transform:translateY(0) scale(.97)}
+#pwBtn:disabled{opacity:.55;cursor:default}
+#pwInput:focus-visible,#pwBtn:focus-visible{outline:2px solid var(--orchid);outline-offset:3px}
+
+.pw-error{
+  margin-top:18px;min-height:16px;
+  font-family:'Karla',sans-serif;
+  font-size:11px;font-weight:400;letter-spacing:.1em;
+  color:var(--blush);
+  opacity:0;transition:opacity .26s;
+}
+.pw-error.show{opacity:1}
+
+@media(max-width:400px){
+  .pw-field{flex-direction:column}
+  #pwInput,#pwBtn{width:100%}
+  #pwBtn{padding:14px 22px}
+}
+
 /* ═══════ AÚN NO EMPIEZA ═══════ */
 #soonState{
   display:none;text-align:center;
@@ -558,6 +669,40 @@ header h1 em{
 </head>
 <body>
 
+<!-- ═══════ PUERTA ═══════ -->
+<div id="lockScreen">
+  <div id="pwBox">
+    <div class="pw-seal">
+      <svg viewBox="0 0 64 64" width="58" height="58" aria-hidden="true">
+        <defs>
+          <linearGradient id="sealG" x1="20%" y1="8%" x2="80%" y2="92%">
+            <stop offset="0%"   stop-color="#F2C6DD"/>
+            <stop offset="55%"  stop-color="#D8548E"/>
+            <stop offset="100%" stop-color="#9E2F63"/>
+          </linearGradient>
+        </defs>
+        <circle cx="32" cy="32" r="21" fill="url(#sealG)" stroke="rgba(255,220,235,.5)" stroke-width="1.4"/>
+        <circle cx="32" cy="32" r="15" fill="none" stroke="rgba(90,20,55,.32)" stroke-width="1"/>
+        <path d="M27 30v-3.2a5 5 0 0 1 10 0V30" fill="none"
+              stroke="rgba(255,238,246,.95)" stroke-width="2" stroke-linecap="round"/>
+        <rect x="25.5" y="30" width="13" height="10" rx="2.2" fill="rgba(255,238,246,.95)"/>
+      </svg>
+    </div>
+
+    <h1 class="pw-title">Solo para ti</h1>
+    <p class="pw-sub">Escribe la palabra que abre esto</p>
+
+    <div class="pw-field">
+      <input id="pwInput" type="password" autocomplete="off" autocapitalize="off"
+             spellcheck="false" placeholder="•••••••••••" aria-label="Contraseña">
+      <button id="pwBtn" onclick="submitPassword()">Entrar</button>
+    </div>
+
+    <p class="pw-error" id="pwError">Esa no es. Inténtalo otra vez.</p>
+  </div>
+</div>
+
+<div id="app">
 <div class="wrap">
 
   <header>
@@ -685,6 +830,7 @@ header h1 em{
   </div>
 
 </div><!-- /wrap -->
+</div><!-- /app -->
 
 <!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="maybeCloseModal(event)">
@@ -710,9 +856,16 @@ header h1 em{
 // ⚙️  CONFIGURACIÓN — edita solo estas líneas
 // ════════════════════════════════════════════════
 
-// 1. ID de tu Google Sheet (la parte larga de la URL)
-//    https://docs.google.com/spreadsheets/d/  👉ESTE_ID👈  /edit
-const SHEET_ID = '1jCmRBikJ4Ms6Nmu1aLy5Ic3EHjgtIHbblRPGrSEwAWg';
+// 1. BÓVEDA — el ID de la Sheet está CIFRADO con la contraseña.
+//    Sin la contraseña correcta no se puede descifrar ni cargar nada.
+//    (Para cambiar la contraseña o la Sheet hay que regenerar estos 3 valores.)
+const VAULT = {
+  salt: 'cWxhlyPMrVxHmzUCKnIAIA==',
+  iv:   'dgbZm9GCBOB9gjPF',
+  ct:   'IuIOlkJSMZEsbY4iBgit3h2HZXPfeY4nlRkF2ee0vIZ9wAQ1vugNqYOevx4C6TMB3etfHxooOlczPahX',
+  iter: 250000
+};
+let SHEET_ID = null;   // se llena solo al desbloquear
 
 // 2. Nombre exacto de la pestaña (por defecto "Hoja 1")
 const SHEET_TAB = 'Hoja1';
@@ -724,6 +877,66 @@ const SHEET_TAB = 'Hoja1';
 const FIRST_RELEASE = Date.UTC(2026, 7, 10, 8, 0);   // lunes 10 ago 2026, 8:00 AM
 
 // ════════════════════════════════════════════════
+
+// ── BÓVEDA: descifrado con la contraseña ────────
+const UNLOCK_KEY = 'amor_unlocked_v1';
+
+function b64ToBytes(s) {
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// Devuelve el SHEET_ID si la contraseña es correcta, o null si no lo es.
+async function tryUnlock(password) {
+  try {
+    const enc  = new TextEncoder();
+    const base = await crypto.subtle.importKey(
+      'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+    const key  = await crypto.subtle.deriveKey(
+      { name:'PBKDF2', salt: b64ToBytes(VAULT.salt), iterations: VAULT.iter, hash:'SHA-256' },
+      base, { name:'AES-GCM', length:256 }, false, ['decrypt']);
+    const plain = await crypto.subtle.decrypt(
+      { name:'AES-GCM', iv: b64ToBytes(VAULT.iv) }, key, b64ToBytes(VAULT.ct));
+    return new TextDecoder().decode(plain);
+  } catch (e) {
+    return null;   // contraseña incorrecta: AES-GCM falla la verificación
+  }
+}
+
+async function submitPassword() {
+  const input = document.getElementById('pwInput');
+  const btn   = document.getElementById('pwBtn');
+  const err   = document.getElementById('pwError');
+  const value = input.value.trim();
+  if (!value) { input.focus(); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Abriendo...';
+  err.classList.remove('show');
+
+  const id = await tryUnlock(value);
+
+  if (id) {
+    try { localStorage.setItem(UNLOCK_KEY, id); } catch(e){}
+    SHEET_ID = id;
+    document.getElementById('lockScreen').classList.add('gone');
+    setTimeout(() => {
+      document.getElementById('lockScreen').style.display = 'none';
+      document.getElementById('app').classList.add('in');
+      boot();
+    }, 480);
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+    err.classList.add('show');
+    input.value = '';
+    input.focus();
+    const box = document.getElementById('pwBox');
+    box.classList.remove('nope'); void box.offsetWidth; box.classList.add('nope');
+  }
+}
 
 // El calendario ahora es fijo en el código: no se guarda fecha de inicio
 // por navegador. Limpiamos las claves viejas para resetear contadores previos.
@@ -1039,7 +1252,8 @@ function burst() {
 
 
 // ── MAIN ──────────────────────────────────────────
-async function init() {
+// Arranque real de la página (solo corre ya desbloqueado)
+async function boot() {
 
   // Date badge
   document.getElementById('dateText').textContent = fmtMs(peruMs());
@@ -1071,6 +1285,30 @@ async function init() {
     document.getElementById('errorMsg').textContent = err.message || 'Error desconocido.';
     console.error(err);
   }
+}
+
+// ── PUNTO DE ENTRADA: la puerta ─────────────────
+function init() {
+  let saved = null;
+  try { saved = localStorage.getItem(UNLOCK_KEY); } catch(e){}
+
+  if (saved) {
+    // Ya desbloqueó antes en este dispositivo
+    SHEET_ID = saved;
+    document.getElementById('lockScreen').style.display = 'none';
+    document.getElementById('app').classList.add('in');
+    boot();
+    return;
+  }
+
+  // Mostrar la pantalla de contraseña
+  const ls = document.getElementById('lockScreen');
+  ls.style.display = 'flex';
+  const input = document.getElementById('pwInput');
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); submitPassword(); }
+  });
+  setTimeout(() => input.focus(), 380);
 }
 
 // Keyboard shortcuts
@@ -1128,6 +1366,18 @@ MODO PREVIEW (solo tú):
 EL CONTADOR YA NO SE GUARDA POR NAVEGADOR.
   El calendario es fijo, así que todos ven la misma carta a la misma hora.
   No hace falta resetear nada en la computadora de ella.
+
+CONTRASEÑA
+  La contraseña es: PenchyGegLove
+  El ID de la Sheet está CIFRADO (AES-GCM + PBKDF2, 250k iteraciones).
+  Sin la contraseña correcta no se puede descifrar ni cargar nada.
+  Una vez que entra, el navegador la recuerda y ya no la vuelve a pedir.
+
+  Para OLVIDAR la sesión y que vuelva a pedir contraseña (consola F12):
+    localStorage.removeItem('amor_unlocked_v1'); location.reload();
+
+  Para CAMBIAR la contraseña hay que regenerar VAULT (salt/iv/ct).
+  Pídeselo a Claude: se genera cifrando el ID con la nueva contraseña.
 
 ════════════════════════════════════════════════════
 -->
